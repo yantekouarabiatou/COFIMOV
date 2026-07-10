@@ -1,0 +1,120 @@
+@import 'datatables.net-dt';
+@import 'select2/dist/css/select2.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Re-skin DataTables to match the COFIMA design instead of its default look */
+.dt-container {
+    font-family: inherit;
+}
+.dt-search input,
+.dt-length select {
+    border-radius: 0.5rem;
+    border: 1px solid #cbd5e1;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    outline: none;
+}
+.dt-search input:focus,
+.dt-length select:focus {
+    border-color: #1B3A6B;
+    box-shadow: 0 0 0 2px rgb(27 58 107 / 0.2);
+}
+table.dataTable thead th {
+    background-color: #f8fafc;
+    color: #6B7280;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+table.dataTable tbody td {
+    border-bottom: 1px solid #f1f5f9 !important;
+    font-size: 0.875rem;
+}
+table.dataTable tbody tr:hover {
+    background-color: #f8fafc;
+}
+.dt-paging .dt-paging-button {
+    border-radius: 0.5rem !important;
+    margin-left: 0.15rem;
+}
+.dt-paging .dt-paging-button.current {
+    background: #1B3A6B !important;
+    border-color: #1B3A6B !important;
+    color: #fff !important;
+}
+.dt-paging .dt-paging-button:hover:not(.disabled) {
+    background: #142C52 !important;
+    border-color: #142C52 !important;
+    color: #fff !important;
+}
+.dt-info {
+    color: #6B7280;
+    font-size: 0.8rem;
+}
+
+/* Re-skin Select2 to match the COFIMA design instead of its default look */
+.select2-container--default .select2-selection--single {
+    height: auto;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    padding: 0;
+    line-height: 1.25rem;
+    font-size: 0.875rem;
+    color: #1e293b;
+}
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #94a3b8;
+}
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+    top: 0;
+    right: 8px;
+}
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: #1B3A6B;
+    box-shadow: 0 0 0 2px rgb(27 58 107 / 0.2);
+}
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #1B3A6B;
+}
+.select2-container--default .select2-results__option[aria-selected="true"] {
+    background-color: #f1f5f9;
+}
+.select2-dropdown {
+    border-color: #cbd5e1;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+/* Homepage motion */
+@keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+    animation: fade-in-up 0.7s ease-out both;
+}
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+.animate-float {
+    animation: float 4s ease-in-out infinite;
+}
+@keyframes blob {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(20px, -30px) scale(1.05); }
+    66% { transform: translate(-15px, 15px) scale(0.97); }
+}
+.animate-blob {
+    animation: blob 12s ease-in-out infinite;
+}
