@@ -21,6 +21,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/demandes/export/pdf', [DemandeTransportController::class, 'exportPdf'])->name('demandes.export.pdf');
     Route::get('/demandes/export/excel', [DemandeTransportController::class, 'exportExcel'])->name('demandes.export.excel');
     Route::get('/demandes/{demande}/pdf', [DemandeTransportController::class, 'pdf'])->name('demandes.pdf');
+    Route::put('/demandes/{demande}', [DemandeTransportController::class, 'update'])->name('demandes.update');
+    Route::post('/demandes/{demande}/annuler', [DemandeTransportController::class, 'annuler'])->name('demandes.annuler');
 
     Route::middleware('role:directeur-general|admin')->prefix('validation')->name('validation.')->group(function () {
         Route::get('/', [ValidationController::class, 'index'])->name('index');

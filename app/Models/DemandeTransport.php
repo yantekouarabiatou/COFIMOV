@@ -11,6 +11,7 @@ class DemandeTransport extends Model
     public const STATUT_EN_ATTENTE = 'en_attente';
     public const STATUT_VALIDEE = 'validee';
     public const STATUT_REJETEE = 'rejetee';
+    public const STATUT_ANNULEE = 'annulee';
 
     protected $fillable = [
         'user_id',

@@ -21,6 +21,16 @@
                     <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
                     Votre demande a été soumise avec succès.
                 </div>
+            @elseif (session('status') === 'demande-modifiee')
+                <div class="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700 flex items-center gap-2">
+                    <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                    Votre demande a été modifiée avec succès.
+                </div>
+            @elseif (session('status') === 'demande-annulee')
+                <div class="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-700 flex items-center gap-2">
+                    <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                    Votre demande a été annulée.
+                </div>
             @endif
 
             <!-- Stats -->
@@ -102,6 +112,7 @@
                                 <th>Justificatif</th>
                                 <th>Statut</th>
                                 <th class="dt-orderable-false">Lettre</th>
+                                <th class="dt-orderable-false">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -138,11 +149,13 @@
                                             'bg-amber-100 text-amber-700' => $demande->statut === 'en_attente',
                                             'bg-emerald-100 text-emerald-700' => $demande->statut === 'validee',
                                             'bg-red-100 text-red-700' => $demande->statut === 'rejetee',
+                                            'bg-slate-100 text-slate-600' => $demande->statut === 'annulee',
                                         ])>
                                             {{ match ($demande->statut) {
                                                 'en_attente' => 'En attente',
                                                 'validee' => 'Validée',
                                                 'rejetee' => 'Rejetée',
+                                                'annulee' => 'Annulée',
                                             } }}
                                         </span>
                                     </td>
@@ -151,6 +164,22 @@
                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg>
                                             PDF
                                         </a>
+                                    </td>
+                                    <td>
+                                        @if ($demande->statut === 'en_attente')
+                                            <div class="flex items-center gap-1.5" x-data="">
+                                                <button type="button" x-on:click="$dispatch('open-modal', 'modifier-{{ $demande->id }}')" class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:border-slate-400 transition-colors">
+                                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125" /></svg>
+                                                    Modifier
+                                                </button>
+                                                <button type="button" x-on:click="$dispatch('open-modal', 'annuler-{{ $demande->id }}')" class="inline-flex items-center gap-1 rounded-lg border border-red-300 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 hover:border-red-400 transition-colors">
+                                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                                                    Annuler
+                                                </button>
+                                            </div>
+                                        @else
+                                            <span class="text-steel">—</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -312,6 +341,142 @@
             </div>
         </form>
     </x-modal>
+
+    <!-- Modales modifier / annuler (une par demande en attente) -->
+    @foreach ($demandes->where('statut', 'en_attente') as $demande)
+        <x-modal name="modifier-{{ $demande->id }}" :show="$errors->any() && (int) old('_edit_demande') === $demande->id" focusable>
+            <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                <h2 class="text-lg font-bold text-slate-800">Modifier la demande</h2>
+                <button type="button" x-on:click="$dispatch('close-modal', 'modifier-{{ $demande->id }}')" class="text-steel hover:text-slate-800 text-2xl leading-none">&times;</button>
+            </div>
+
+            <form method="POST" action="{{ route('demandes.update', $demande) }}" enctype="multipart/form-data" class="px-6 py-5 space-y-4"
+                  x-data="trajetsForm({{ (int) old('_edit_demande') === $demande->id && old('trajets') ? json_encode(old('trajets')) : json_encode($demande->trajets->map(fn ($t) => [
+                      'lieu_depart' => $t->lieu_depart,
+                      'lieu_arrivee' => $t->lieu_arrivee,
+                      'date_deplacement' => $t->date_deplacement->format('Y-m-d'),
+                      'moyen_transport' => $t->moyen_transport,
+                      'cout_estime' => (string) $t->cout_estime,
+                  ])->values()) }})">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="_edit_demande" value="{{ $demande->id }}">
+
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <x-input-label value="Trajets *" class="mb-0" />
+                        <button type="button" x-on:click="addTrajet()" class="text-xs font-semibold text-cofima hover:text-cofima-dark inline-flex items-center gap-1">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                            Ajouter un trajet
+                        </button>
+                    </div>
+
+                    <template x-for="(trajet, index) in trajets" :key="trajet.id">
+                        <div class="rounded-lg border border-slate-200 p-4 mb-3 relative">
+                            <button type="button" x-show="trajets.length > 1" x-on:click="removeTrajet(trajet.id)"
+                                    class="absolute top-2 right-2 text-steel hover:text-red-600 text-lg leading-none">&times;</button>
+
+                            <p class="text-xs font-semibold text-steel mb-3">Trajet <span x-text="index + 1"></span></p>
+
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <x-input-label value="Lieu de départ *" class="text-xs" />
+                                    <input type="text" :name="`trajets[${trajet.id}][lieu_depart]`" x-model="trajet.lieu_depart" required placeholder="Ex : COFIMA"
+                                           class="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20 mt-1" />
+                                </div>
+                                <div>
+                                    <x-input-label value="Lieu d'arrivée *" class="text-xs" />
+                                    <input type="text" :name="`trajets[${trajet.id}][lieu_arrivee]`" x-model="trajet.lieu_arrivee" required placeholder="Ex : Godomey"
+                                           class="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20 mt-1" />
+                                </div>
+                            </div>
+
+                            <div class="grid gap-3 sm:grid-cols-3 mt-3">
+                                <div>
+                                    <x-input-label value="Date *" class="text-xs" />
+                                    <input type="date" :name="`trajets[${trajet.id}][date_deplacement]`" x-model="trajet.date_deplacement" required
+                                           class="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20 mt-1" />
+                                </div>
+                                <div>
+                                    <x-input-label value="Moyen de transport *" class="text-xs" />
+                                    <select :name="`trajets[${trajet.id}][moyen_transport]`" x-model="trajet.moyen_transport" required
+                                            class="js-select2-trajet w-full mt-1">
+                                        <option value="">Sélectionner…</option>
+                                        @foreach (['Taxi', 'Moto', 'Véhicule personnel', 'Location', 'Autre'] as $option)
+                                            <option value="{{ $option }}">{{ $option }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div>
+                                    <x-input-label value="Coût estimé (FCFA) *" class="text-xs" />
+                                    <input type="number" min="0" step="100" :name="`trajets[${trajet.id}][cout_estime]`" x-model="trajet.cout_estime" required placeholder="Ex : 8500"
+                                           class="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20 mt-1" />
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <x-input-error :messages="$errors->get('trajets')" class="mt-2" />
+
+                    <div class="flex items-center justify-end gap-2 text-sm mt-2 pt-2 border-t border-slate-100">
+                        <span class="text-steel">Coût total estimé :</span>
+                        <span class="font-bold text-cofima" x-text="formatFCFA(total)"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <x-input-label for="motif-{{ $demande->id }}" value="Motif du déplacement *" />
+                    <x-text-input id="motif-{{ $demande->id }}" name="motif" class="block mt-1 w-full" :value="(int) old('_edit_demande') === $demande->id ? old('motif') : $demande->motif" required placeholder="Ex : Rendez-vous client, mission d'audit…" />
+                    <x-input-error :messages="$errors->get('motif')" class="mt-2" />
+                </div>
+
+                <div>
+                    <x-input-label for="justificatif-{{ $demande->id }}" value="Ajouter un justificatif (optionnel)" />
+                    <input id="justificatif-{{ $demande->id }}" name="justificatif" type="file" accept=".jpg,.jpeg,.png,.pdf" class="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20 mt-1" />
+                    <p class="mt-1 text-xs text-steel">JPG, PNG ou PDF, 5 Mo maximum. Les justificatifs déjà envoyés restent conservés.</p>
+                    <x-input-error :messages="$errors->get('justificatif')" class="mt-2" />
+                </div>
+
+                <div>
+                    <x-input-label for="commentaire-{{ $demande->id }}" value="Commentaire (optionnel)" />
+                    <textarea id="commentaire-{{ $demande->id }}" name="commentaire" rows="2" class="w-full rounded-lg border border-slate-300 px-3.5 py-2.5 text-sm outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20 mt-1" placeholder="Précisions éventuelles…">{{ (int) old('_edit_demande') === $demande->id ? old('commentaire') : $demande->commentaire }}</textarea>
+                    <x-input-error :messages="$errors->get('commentaire')" class="mt-2" />
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-2">
+                    <x-secondary-button type="button" x-on:click="$dispatch('close-modal', 'modifier-{{ $demande->id }}')">
+                        Annuler
+                    </x-secondary-button>
+                    <x-primary-button>
+                        Enregistrer les modifications
+                    </x-primary-button>
+                </div>
+            </form>
+        </x-modal>
+
+        <x-modal name="annuler-{{ $demande->id }}" maxWidth="md">
+            <div class="flex items-center justify-between border-b border-slate-100 px-6 py-4">
+                <h2 class="text-lg font-bold text-slate-800">Annuler la demande</h2>
+                <button type="button" x-on:click="$dispatch('close-modal', 'annuler-{{ $demande->id }}')" class="text-steel hover:text-slate-800 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="px-6 py-5">
+                <p class="text-sm text-steel">
+                    Êtes-vous sûr de vouloir annuler la demande
+                    « {{ $demande->trajets->map(fn ($t) => $t->lieu_depart.' → '.$t->lieu_arrivee)->implode(', ') }} » ?
+                    Cette action est irréversible.
+                </p>
+                <form method="POST" action="{{ route('demandes.annuler', $demande) }}" class="flex items-center justify-end gap-3 mt-5">
+                    @csrf
+                    <x-secondary-button type="button" x-on:click="$dispatch('close-modal', 'annuler-{{ $demande->id }}')">
+                        Retour
+                    </x-secondary-button>
+                    <button type="submit" class="rounded-lg bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-700 transition-colors">
+                        Confirmer l&apos;annulation
+                    </button>
+                </form>
+            </div>
+        </x-modal>
+    @endforeach
 
     @push('scripts')
         <script>

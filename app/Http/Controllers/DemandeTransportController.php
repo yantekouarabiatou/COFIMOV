@@ -19,19 +19,21 @@ class DemandeTransportController extends Controller
 {
     use ResolvesExportPeriod;
 
+    private const TRAJET_RULES = [
+        'trajets' => ['required', 'array', 'min:1'],
+        'trajets.*.lieu_depart' => ['required', 'string', 'max:255'],
+        'trajets.*.lieu_arrivee' => ['required', 'string', 'max:255'],
+        'trajets.*.date_deplacement' => ['required', 'date'],
+        'trajets.*.moyen_transport' => ['required', 'in:Taxi,Moto,Véhicule personnel,Location,Autre'],
+        'trajets.*.cout_estime' => ['required', 'numeric', 'min:0'],
+        'motif' => ['required', 'string', 'max:255'],
+        'commentaire' => ['nullable', 'string'],
+        'justificatif' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+    ];
+
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'trajets' => ['required', 'array', 'min:1'],
-            'trajets.*.lieu_depart' => ['required', 'string', 'max:255'],
-            'trajets.*.lieu_arrivee' => ['required', 'string', 'max:255'],
-            'trajets.*.date_deplacement' => ['required', 'date'],
-            'trajets.*.moyen_transport' => ['required', 'in:Taxi,Moto,Véhicule personnel,Location,Autre'],
-            'trajets.*.cout_estime' => ['required', 'numeric', 'min:0'],
-            'motif' => ['required', 'string', 'max:255'],
-            'commentaire' => ['nullable', 'string'],
-            'justificatif' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
-        ]);
+        $validated = $request->validate(self::TRAJET_RULES);
 
         $demande = $request->user()->demandeTransports()->create([
             'motif' => $validated['motif'],
@@ -44,18 +46,7 @@ class DemandeTransportController extends Controller
             $demande->trajets()->create($trajet);
         }
 
-        if ($request->hasFile('justificatif')) {
-            $file = $request->file('justificatif');
-            $chemin = $file->store('justificatifs', 'public');
-
-            Justificatif::create([
-                'demande_transport_id' => $demande->id,
-                'nom_original' => $file->getClientOriginalName(),
-                'chemin' => $chemin,
-                'type_mime' => $file->getClientMimeType(),
-                'taille' => $file->getSize(),
-            ]);
-        }
+        $this->storeJustificatifIfPresent($request, $demande);
 
         $demande->historiques()->create([
             'user_id' => $request->user()->id,
@@ -72,6 +63,73 @@ class DemandeTransportController extends Controller
         }
 
         return redirect()->route('dashboard')->with('status', 'demande-soumise');
+    }
+
+    public function update(Request $request, DemandeTransport $demande): RedirectResponse
+    {
+        $this->authorizeOwnerAndPending($request, $demande);
+
+        $validated = $request->validate(self::TRAJET_RULES);
+
+        $demande->update([
+            'motif' => $validated['motif'],
+            'commentaire' => $validated['commentaire'] ?? null,
+            'cout_estime' => collect($validated['trajets'])->sum('cout_estime'),
+        ]);
+
+        $demande->trajets()->delete();
+        foreach ($validated['trajets'] as $trajet) {
+            $demande->trajets()->create($trajet);
+        }
+
+        $this->storeJustificatifIfPresent($request, $demande);
+
+        $demande->historiques()->create([
+            'user_id' => $request->user()->id,
+            'statut' => DemandeTransport::STATUT_EN_ATTENTE,
+            'commentaire' => 'Demande modifiée par le collaborateur.',
+        ]);
+
+        return redirect()->route('dashboard')->with('status', 'demande-modifiee');
+    }
+
+    public function annuler(Request $request, DemandeTransport $demande): RedirectResponse
+    {
+        $this->authorizeOwnerAndPending($request, $demande);
+
+        $demande->update(['statut' => DemandeTransport::STATUT_ANNULEE]);
+
+        $demande->historiques()->create([
+            'user_id' => $request->user()->id,
+            'statut' => DemandeTransport::STATUT_ANNULEE,
+            'commentaire' => 'Demande annulée par le collaborateur.',
+        ]);
+
+        return redirect()->route('dashboard')->with('status', 'demande-annulee');
+    }
+
+    private function authorizeOwnerAndPending(Request $request, DemandeTransport $demande): void
+    {
+        abort_unless($request->user()->id === $demande->user_id, 403);
+        abort_unless($demande->statut === DemandeTransport::STATUT_EN_ATTENTE, 403, 'Cette demande ne peut plus être modifiée.');
+    }
+
+    private function storeJustificatifIfPresent(Request $request, DemandeTransport $demande): void
+    {
+        if (! $request->hasFile('justificatif')) {
+            return;
+        }
+
+        $file = $request->file('justificatif');
+        $chemin = $file->store('justificatifs', 'public');
+
+        Justificatif::create([
+            'demande_transport_id' => $demande->id,
+            'nom_original' => $file->getClientOriginalName(),
+            'chemin' => $chemin,
+            'type_mime' => $file->getClientMimeType(),
+            'taille' => $file->getSize(),
+        ]);
     }
 
     public function pdf(Request $request, DemandeTransport $demande): Response
