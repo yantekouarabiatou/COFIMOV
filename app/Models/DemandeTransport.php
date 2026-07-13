@@ -14,10 +14,6 @@ class DemandeTransport extends Model
 
     protected $fillable = [
         'user_id',
-        'lieu_depart',
-        'lieu_arrivee',
-        'date_deplacement',
-        'moyen_transport',
         'motif',
         'cout_estime',
         'commentaire',
@@ -30,7 +26,6 @@ class DemandeTransport extends Model
     protected function casts(): array
     {
         return [
-            'date_deplacement' => 'date',
             'date_validation' => 'datetime',
             'cout_estime' => 'decimal:2',
         ];
@@ -46,6 +41,11 @@ class DemandeTransport extends Model
         return $this->belongsTo(User::class, 'valide_par');
     }
 
+    public function trajets(): HasMany
+    {
+        return $this->hasMany(Trajet::class)->orderBy('date_deplacement');
+    }
+
     public function justificatifs(): HasMany
     {
         return $this->hasMany(Justificatif::class);
@@ -54,5 +54,15 @@ class DemandeTransport extends Model
     public function historiques(): HasMany
     {
         return $this->hasMany(DemandeTransportHistorique::class)->latest();
+    }
+
+    public function getDateDebutAttribute()
+    {
+        return $this->trajets->min('date_deplacement');
+    }
+
+    public function getDateFinAttribute()
+    {
+        return $this->trajets->max('date_deplacement');
     }
 }

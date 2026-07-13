@@ -2,9 +2,9 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-base sm:text-lg font-bold text-slate-800">Tableau de bord</h2>
-                <p class="text-xs text-steel">Vue d&apos;ensemble de vos demandes</p>
+                        <div>
+                <h2 class="text-base sm:text-lg font-bold text-white">Tableau de bord</h2>
+                <p class="text-xs text-white">Vue d&apos;ensemble de vos demandes</p>
             </div>
             <button type="button" x-data="" x-on:click="$dispatch('open-modal', 'nouvelle-demande')" class="inline-flex items-center gap-2 rounded-lg bg-cofima px-4 py-2.5 text-sm font-semibold text-white hover:bg-cofima-dark transition-colors shadow-sm hover:shadow">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
@@ -65,9 +65,30 @@
 
             <!-- Table -->
             <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <h2 class="font-semibold text-slate-800">Mes demandes</h2>
-                    <span class="text-xs text-steel">{{ $demandes->count() }} demande(s)</span>
+                <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <h2 class="font-semibold text-cofima">Mes demandes</h2>
+                        <span class="text-xs text-steel">{{ $demandes->count() }} demande(s)</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
+                            <svg class="h-4 w-4 text-steel shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+                            <input type="date" id="demandes-du" class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20">
+                            <span class="text-steel text-xs">→</span>
+                            <input type="date" id="demandes-au" class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20">
+                            <button type="button" id="demandes-reset" title="Réinitialiser la période" class="ml-0.5 rounded-md p-1 text-steel hover:text-cofima hover:bg-white transition-colors">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                        <a href="{{ route('demandes.export.pdf') }}" id="demandes-export-pdf" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:border-slate-400 transition-colors">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+                            PDF
+                        </a>
+                        <a href="{{ route('demandes.export.excel') }}" id="demandes-export-excel" class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 hover:border-emerald-400 transition-colors">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25" /></svg>
+                            Excel
+                        </a>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto p-5">
@@ -85,10 +106,21 @@
                         </thead>
                         <tbody>
                             @foreach ($demandes as $demande)
-                                <tr>
-                                    <td data-order="{{ $demande->date_deplacement->format('Y-m-d') }}" class="whitespace-nowrap text-slate-700">{{ $demande->date_deplacement->format('d/m/Y') }}</td>
-                                    <td class="text-slate-700">{{ $demande->lieu_depart }} → {{ $demande->lieu_arrivee }}</td>
-                                    <td class="text-slate-700">{{ $demande->moyen_transport }}</td>
+                                <tr data-date="{{ $demande->date_debut->format('Y-m-d') }}">
+                                    <td data-order="{{ $demande->date_debut->format('Y-m-d') }}" class="whitespace-nowrap text-slate-700">
+                                        @if ($demande->date_debut->isSameDay($demande->date_fin))
+                                            {{ $demande->date_debut->format('d/m/Y') }}
+                                        @else
+                                            {{ $demande->date_debut->format('d/m/Y') }} - {{ $demande->date_fin->format('d/m/Y') }}
+                                        @endif
+                                    </td>
+                                    <td class="text-slate-700 max-w-[16rem] truncate" title="{{ $demande->trajets->map(fn ($t) => $t->lieu_depart.' → '.$t->lieu_arrivee)->implode(', ') }}">
+                                        {{ $demande->trajets->map(fn ($t) => $t->lieu_depart.' → '.$t->lieu_arrivee)->implode(', ') }}
+                                        @if ($demande->trajets->count() > 1)
+                                            <span class="text-xs text-steel">({{ $demande->trajets->count() }} trajets)</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-slate-700">{{ $demande->trajets->pluck('moyen_transport')->unique()->implode(', ') }}</td>
                                     <td data-order="{{ $demande->cout_estime }}" class="whitespace-nowrap font-medium text-cofima">{{ number_format($demande->cout_estime, 0, ',', ' ') }} FCFA</td>
                                     <td>
                                         @forelse ($demande->justificatifs as $justificatif)
@@ -127,7 +159,7 @@
             <!-- Historique des validations/rejets -->
             <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
                 <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <h2 class="font-semibold text-slate-800">Historique des validations / rejets</h2>
+                    <h2 class="font-semibold text-cofima">Historique des validations / rejets</h2>
                     <span class="text-xs text-steel">{{ $historiques->count() }} événement(s)</span>
                 </div>
 
@@ -182,38 +214,69 @@
             <button type="button" x-on:click="$dispatch('close-modal', 'nouvelle-demande')" class="text-steel hover:text-slate-800 text-2xl leading-none">&times;</button>
         </div>
 
-        <form method="POST" action="{{ route('demandes.store') }}" enctype="multipart/form-data" class="px-6 py-5 space-y-4">
+        <form method="POST" action="{{ route('demandes.store') }}" enctype="multipart/form-data" class="px-6 py-5 space-y-4"
+              x-data="trajetsForm({{ old('trajets') ? json_encode(old('trajets')) : 'null' }})">
             @csrf
 
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div>
-                    <x-input-label for="lieu_depart" value="Lieu de départ *" />
-                    <x-text-input id="lieu_depart" name="lieu_depart" class="block mt-1 w-full" :value="old('lieu_depart')" required placeholder="Ex : COFIMA" />
-                    <x-input-error :messages="$errors->get('lieu_depart')" class="mt-2" />
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <x-input-label value="Trajets *" class="mb-0" />
+                    <button type="button" x-on:click="addTrajet()" class="text-xs font-semibold text-cofima hover:text-cofima-dark inline-flex items-center gap-1">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                        Ajouter un trajet
+                    </button>
                 </div>
-                <div>
-                    <x-input-label for="lieu_arrivee" value="Lieu d'arrivée *" />
-                    <x-text-input id="lieu_arrivee" name="lieu_arrivee" class="block mt-1 w-full" :value="old('lieu_arrivee')" required placeholder="Ex : Godomey
-                    " />
-                    <x-input-error :messages="$errors->get('lieu_arrivee')" class="mt-2" />
-                </div>
-            </div>
 
-            <div class="grid gap-4 sm:grid-cols-2">
-                <div>
-                    <x-input-label for="date_deplacement" value="Date du déplacement *" />
-                    <x-text-input id="date_deplacement" name="date_deplacement" type="date" class="block mt-1 w-full" :value="old('date_deplacement')" required />
-                    <x-input-error :messages="$errors->get('date_deplacement')" class="mt-2" />
-                </div>
-                <div>
-                    <x-input-label for="moyen_transport" value="Moyen de transport *" />
-                    <select id="moyen_transport" name="moyen_transport" required class="js-select2 w-full mt-1">
-                        <option value="">Sélectionner…</option>
-                        @foreach (['Taxi', 'Moto', 'Véhicule personnel', 'Location', 'Autre'] as $option)
-                            <option value="{{ $option }}" @selected(old('moyen_transport') === $option)>{{ $option }}</option>
-                        @endforeach
-                    </select>
-                    <x-input-error :messages="$errors->get('moyen_transport')" class="mt-2" />
+                <template x-for="(trajet, index) in trajets" :key="trajet.id">
+                    <div class="rounded-lg border border-slate-200 p-4 mb-3 relative">
+                        <button type="button" x-show="trajets.length > 1" x-on:click="removeTrajet(trajet.id)"
+                                class="absolute top-2 right-2 text-steel hover:text-red-600 text-lg leading-none">&times;</button>
+
+                        <p class="text-xs font-semibold text-steel mb-3">Trajet <span x-text="index + 1"></span></p>
+
+                        <div class="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <x-input-label value="Lieu de départ *" class="text-xs" />
+                                <input type="text" :name="`trajets[${trajet.id}][lieu_depart]`" x-model="trajet.lieu_depart" required placeholder="Ex : COFIMA"
+                                       class="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20 mt-1" />
+                            </div>
+                            <div>
+                                <x-input-label value="Lieu d'arrivée *" class="text-xs" />
+                                <input type="text" :name="`trajets[${trajet.id}][lieu_arrivee]`" x-model="trajet.lieu_arrivee" required placeholder="Ex : Godomey"
+                                       class="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20 mt-1" />
+                            </div>
+                        </div>
+
+                        <div class="grid gap-3 sm:grid-cols-3 mt-3">
+                            <div>
+                                <x-input-label value="Date *" class="text-xs" />
+                                <input type="date" :name="`trajets[${trajet.id}][date_deplacement]`" x-model="trajet.date_deplacement" required
+                                       class="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20 mt-1" />
+                            </div>
+                            <div>
+                                <x-input-label value="Moyen de transport *" class="text-xs" />
+                                <select :name="`trajets[${trajet.id}][moyen_transport]`" x-model="trajet.moyen_transport" required
+                                        class="js-select2-trajet w-full mt-1">
+                                    <option value="">Sélectionner…</option>
+                                    @foreach (['Taxi', 'Moto', 'Véhicule personnel', 'Location', 'Autre'] as $option)
+                                        <option value="{{ $option }}">{{ $option }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <x-input-label value="Coût estimé (FCFA) *" class="text-xs" />
+                                <input type="number" min="0" step="100" :name="`trajets[${trajet.id}][cout_estime]`" x-model="trajet.cout_estime" required placeholder="Ex : 8500"
+                                       class="w-full rounded-lg border border-slate-300 px-3.5 py-2 text-sm outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20 mt-1" />
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <x-input-error :messages="$errors->get('trajets')" class="mt-2" />
+
+                <div class="flex items-center justify-end gap-2 text-sm mt-2 pt-2 border-t border-slate-100">
+                    <span class="text-steel">Coût total estimé :</span>
+                    <span class="font-bold text-cofima" x-text="formatFCFA(total)"></span>
                 </div>
             </div>
 
@@ -221,12 +284,6 @@
                 <x-input-label for="motif" value="Motif du déplacement *" />
                 <x-text-input id="motif" name="motif" class="block mt-1 w-full" :value="old('motif')" required placeholder="Ex : Rendez-vous client, mission d'audit…" />
                 <x-input-error :messages="$errors->get('motif')" class="mt-2" />
-            </div>
-
-            <div>
-                <x-input-label for="cout_estime" value="Coût estimé (FCFA) *" />
-                <x-text-input id="cout_estime" name="cout_estime" type="number" min="0" step="100" class="block mt-1 w-full" :value="old('cout_estime')" required placeholder="Ex : 8500" />
-                <x-input-error :messages="$errors->get('cout_estime')" class="mt-2" />
             </div>
 
             <div>
@@ -256,6 +313,9 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                window.initPeriodFilter('demandes-table', 'demandes-du', 'demandes-au', 'demandes-reset');
+                window.wireExportLinks('demandes-du', 'demandes-au', ['demandes-export-pdf', 'demandes-export-excel']);
+
                 new DataTable('#demandes-table', {
                     order: [[0, 'desc']],
                     language: window.dtFrench,
@@ -270,13 +330,7 @@
                     });
                 }
 
-                $('.js-select2').select2({
-                    width: '100%',
-                    placeholder: 'Sélectionner…',
-                    language: {
-                        noResults: () => 'Aucun résultat trouvé',
-                    },
-                });
+                window.initTrajetSelect2();
             });
         </script>
     @endpush

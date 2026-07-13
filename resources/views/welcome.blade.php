@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>{{ config('app.name', 'COFIMA') }} — Gestion des frais de transport</title>
+        <title>{{ config('app.name', 'COFIMOV') }} — Gestion des frais de transport</title>
         <meta name="description" content="Application interne COFIMA pour la gestion des demandes de frais de transport." />
         <link rel="icon" type="image/png" href="{{ asset('logocofima.png') }}">
 
@@ -24,7 +24,7 @@
                     <div class="flex items-center gap-3">
                         <x-application-logo />
                         <div class="leading-tight">
-                            <p class="text-xl font-extrabold tracking-tight text-cofima">COFIMA</p>
+                            <p class="text-xl font-extrabold tracking-tight text-cofima">COFIMOV</p>
                             <p class="text-[9px] sm:text-[10px] font-medium tracking-wide text-steel uppercase">Compagnie Fiduciaire de Management et d&apos;Audit</p>
                         </div>
                     </div>
@@ -116,7 +116,7 @@
                                     </span>
                                 </div>
                                 <dl class="mt-4 space-y-3 text-sm">
-                                    <div class="flex justify-between"><dt class="text-steel">Trajet</dt><dd class="font-medium text-slate-800">Plateau → Cocody</dd></div>
+                                    <div class="flex justify-between"><dt class="text-steel">Trajet</dt><dd class="font-medium text-slate-800">COFIMA → CALAVI</dd></div>
                                     <div class="flex justify-between"><dt class="text-steel">Date</dt><dd class="font-medium text-slate-800">12/06/2026</dd></div>
                                     <div class="flex justify-between"><dt class="text-steel">Transport</dt><dd class="font-medium text-slate-800">Taxi</dd></div>
                                     <div class="flex justify-between"><dt class="text-steel">Coût estimé</dt><dd class="font-semibold text-cofima">8 500 FCFA</dd></div>

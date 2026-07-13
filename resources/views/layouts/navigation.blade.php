@@ -7,7 +7,7 @@
                 <div class="shrink-0 flex items-center gap-3">
                     <a href="{{ route('dashboard') }}" class="flex items-center gap-3">
                         <x-application-logo size="h-9 w-9" />
-                        <span class="hidden sm:block font-extrabold tracking-tight text-lg">COFIMA</span>
+                        <span class="hidden sm:block font-extrabold tracking-tight text-lg">COFIMOV</span>
                     </a>
                 </div>
 

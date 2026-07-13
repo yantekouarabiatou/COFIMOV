@@ -1,3 +1,4 @@
+
 <x-guest-layout>
     <h1 class="text-xl font-bold text-slate-800">Confirmation requise</h1>
     <p class="mt-1 text-sm text-steel">

@@ -22,9 +22,30 @@
             @endif
 
             <div class="rounded-xl border border-slate-200 bg-white overflow-hidden">
-                <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <h2 class="font-semibold text-slate-800">Demandes en attente</h2>
-                    <span class="text-xs text-steel">{{ $demandes->count() }} demande(s)</span>
+                <div class="px-5 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <h2 class="font-semibold text-slate-800">Demandes en attente</h2>
+                        <span class="text-xs text-steel">{{ $demandes->count() }} demande(s)</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5">
+                            <svg class="h-4 w-4 text-steel shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" /></svg>
+                            <input type="date" id="validation-du" class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20">
+                            <span class="text-steel text-xs">→</span>
+                            <input type="date" id="validation-au" class="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none focus:border-cofima focus:ring-2 focus:ring-cofima/20">
+                            <button type="button" id="validation-reset" title="Réinitialiser la période" class="ml-0.5 rounded-md p-1 text-steel hover:text-cofima hover:bg-white transition-colors">
+                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                        <a href="{{ route('validation.export.pdf') }}" id="validation-export-pdf" title="Exporter toutes les demandes en PDF" class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:border-slate-400 transition-colors">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
+                            PDF
+                        </a>
+                        <a href="{{ route('validation.export.excel') }}" id="validation-export-excel" title="Exporter toutes les demandes en Excel" class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 hover:border-emerald-400 transition-colors">
+                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25" /></svg>
+                            Excel
+                        </a>
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto p-5">
@@ -44,14 +65,25 @@
                         </thead>
                         <tbody>
                             @foreach ($demandes as $demande)
-                                <tr>
+                                <tr data-date="{{ $demande->date_debut->format('Y-m-d') }}">
                                     <td>
                                         <p class="font-medium text-slate-800">{{ $demande->user->full_name }}</p>
                                         <p class="text-xs text-steel">{{ $demande->user->email }}</p>
                                     </td>
-                                    <td class="text-slate-700">{{ $demande->lieu_depart }} → {{ $demande->lieu_arrivee }}</td>
-                                    <td data-order="{{ $demande->date_deplacement->format('Y-m-d') }}" class="whitespace-nowrap text-slate-700">{{ $demande->date_deplacement->format('d/m/Y') }}</td>
-                                    <td class="text-slate-700">{{ $demande->moyen_transport }}</td>
+                                    <td class="text-slate-700 max-w-[16rem] truncate" title="{{ $demande->trajets->map(fn ($t) => $t->lieu_depart.' → '.$t->lieu_arrivee)->implode(', ') }}">
+                                        {{ $demande->trajets->map(fn ($t) => $t->lieu_depart.' → '.$t->lieu_arrivee)->implode(', ') }}
+                                        @if ($demande->trajets->count() > 1)
+                                            <span class="text-xs text-steel">({{ $demande->trajets->count() }} trajets)</span>
+                                        @endif
+                                    </td>
+                                    <td data-order="{{ $demande->date_debut->format('Y-m-d') }}" class="whitespace-nowrap text-slate-700">
+                                        @if ($demande->date_debut->isSameDay($demande->date_fin))
+                                            {{ $demande->date_debut->format('d/m/Y') }}
+                                        @else
+                                            {{ $demande->date_debut->format('d/m/Y') }} - {{ $demande->date_fin->format('d/m/Y') }}
+                                        @endif
+                                    </td>
+                                    <td class="text-slate-700">{{ $demande->trajets->pluck('moyen_transport')->unique()->implode(', ') }}</td>
                                     <td data-order="{{ $demande->cout_estime }}" class="whitespace-nowrap font-semibold text-cofima">{{ number_format($demande->cout_estime, 0, ',', ' ') }} FCFA</td>
                                     <td class="text-slate-700 max-w-[16rem] truncate" title="{{ $demande->motif }}">{{ $demande->motif }}</td>
                                     <td>
@@ -100,7 +132,7 @@
                 @csrf
                 <p class="text-sm text-steel">
                     Demande de <span class="font-medium text-slate-800">{{ $demande->user->full_name }}</span>
-                    ({{ $demande->lieu_depart }} → {{ $demande->lieu_arrivee }})
+                    ({{ $demande->trajets->map(fn ($t) => $t->lieu_depart.' → '.$t->lieu_arrivee)->implode(', ') }})
                 </p>
                 <div>
                     <x-input-label for="motif_rejet_{{ $demande->id }}" value="Motif du rejet *" />
@@ -121,6 +153,9 @@
     @push('scripts')
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                window.initPeriodFilter('validation-table', 'validation-du', 'validation-au', 'validation-reset');
+                window.wireExportLinks('validation-du', 'validation-au', ['validation-export-pdf', 'validation-export-excel']);
+
                 new DataTable('#validation-table', {
                     order: [[2, 'asc']],
                     language: window.dtFrench,

@@ -2,14 +2,12 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Demande de remboursement de frais de transport</title>
+    <title>Demande de frais de transport</title>
 
     @php
         $employe = $demande->user;
-        $moyens = [
-            'depart' => $demande->lieu_depart,
-            'arrivee' => $demande->lieu_arrivee,
-        ];
+        $trajets = $demande->trajets;
+        $premier = $trajets->first();
     @endphp
 
     <style>
@@ -78,12 +76,36 @@
             border-collapse: collapse;
             margin: 1rem 0 1.5rem 0;
         }
+        .recap th {
+            text-align: left;
+            padding: 5px 8px;
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #6B7280;
+            font-size: 8.5pt;
+            text-transform: uppercase;
+        }
         .recap td {
             padding: 5px 8px;
             border: 1px solid #cbd5e1;
             font-size: 9.5pt;
         }
-        .recap td:first-child {
+        .recap tfoot td {
+            font-weight: bold;
+            background: #f8fafc;
+        }
+
+        .infos {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0 1.5rem 0;
+        }
+        .infos td {
+            padding: 5px 8px;
+            border: 1px solid #cbd5e1;
+            font-size: 9.5pt;
+        }
+        .infos td:first-child {
             width: 40%;
             color: #6B7280;
             background: #f8fafc;
@@ -141,40 +163,56 @@
     </div>
 
     <div class="objet">
-        <strong style="text-decoration: underline;">Objet :</strong> Demande de remboursement de frais de transport
+        <strong style="text-decoration: underline;">Objet :</strong> Demande de frais de transport
     </div>
 
     <div class="content">
         <p>Madame, Monsieur le Directeur Général,</p>
 
-        <p>
-            Je me permets par la présente de solliciter le remboursement des frais de transport
-            engagés dans le cadre de l&apos;exercice de mes fonctions au sein du cabinet.
-        </p>
-
-        <p>
-            En effet, je me suis déplacé{{ $employe->sexe === 'F' ? 'e' : '' }} de <strong>{{ $moyens['depart'] }}</strong>
-            à <strong>{{ $moyens['arrivee'] }}</strong> le <strong>{{ $demande->date_deplacement->isoFormat('D MMMM YYYY') }}</strong>,
-            en <strong>{{ $demande->moyen_transport }}</strong>, dans le cadre de : {{ lcfirst($demande->motif) }}.
-        </p>
+        @if ($trajets->count() === 1)
+            <p>
+                Je me permets par la présente de solliciter les frais de transport
+                engagés dans le cadre de l&apos;exercice de mes fonctions au sein du cabinet.
+                En effet, je me suis déplacé{{ $employe->sexe === 'F' ? 'e' : '' }} de <strong>{{ $premier->lieu_depart }}</strong>
+                à <strong>{{ $premier->lieu_arrivee }}</strong> le <strong>{{ $premier->date_deplacement->isoFormat('D MMMM YYYY') }}</strong>,
+                en <strong>{{ $premier->moyen_transport }}</strong>, dans le cadre de : {{ lcfirst($demande->motif) }}.
+            </p>
+        @else
+            <p>
+                Je me permets par la présente de solliciter les frais de transport
+                engagés dans le cadre de l&apos;exercice de mes fonctions au sein du cabinet, dans le cadre de :
+                {{ lcfirst($demande->motif) }}. Cette mission a comporté {{ $trajets->count() }} trajets, détaillés ci-dessous.
+            </p>
+        @endif
 
         <table class="recap">
-            <tr>
-                <td>Trajet</td>
-                <td>{{ $moyens['depart'] }} → {{ $moyens['arrivee'] }}</td>
-            </tr>
-            <tr>
-                <td>Date du déplacement</td>
-                <td>{{ $demande->date_deplacement->isoFormat('D MMMM YYYY') }}</td>
-            </tr>
-            <tr>
-                <td>Moyen de transport</td>
-                <td>{{ $demande->moyen_transport }}</td>
-            </tr>
-            <tr>
-                <td>Coût estimé</td>
-                <td>{{ number_format($demande->cout_estime, 0, ',', ' ') }} FCFA</td>
-            </tr>
+            <thead>
+                <tr>
+                    <th>Trajet</th>
+                    <th>Date</th>
+                    <th>Moyen de transport</th>
+                    <th>Coût</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($trajets as $trajet)
+                    <tr>
+                        <td>{{ $trajet->lieu_depart }} → {{ $trajet->lieu_arrivee }}</td>
+                        <td>{{ $trajet->date_deplacement->isoFormat('D MMMM YYYY') }}</td>
+                        <td>{{ $trajet->moyen_transport }}</td>
+                        <td>{{ number_format($trajet->cout_estime, 0, ',', ' ') }} FCFA</td>
+                    </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="3">Total</td>
+                    <td>{{ number_format($demande->cout_estime, 0, ',', ' ') }} FCFA</td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <table class="infos">
             @if ($demande->commentaire)
                 <tr>
                     <td>Commentaire</td>
@@ -200,7 +238,7 @@
 
         <p>
             Je vous saurais gré de bien vouloir examiner favorablement cette demande et d&apos;autoriser
-            le remboursement du montant susmentionné.
+            le  du montant susmentionné.
         </p>
 
         <p>

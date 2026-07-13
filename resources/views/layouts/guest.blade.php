@@ -5,7 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'COFIMA') }}</title>
+        <title>{{ config('app.name', 'COFIMOV') }}</title>
         <link rel="icon" type="image/png" href="{{ asset('logocofima.png') }}">
 
         <!-- Fonts -->
@@ -22,7 +22,7 @@
                 <a href="/" class="flex flex-col items-center gap-3 mb-8">
                     <x-application-logo size="h-14 w-14" />
                     <div class="text-center leading-tight">
-                        <p class="text-2xl font-extrabold tracking-tight text-cofima">COFIMA</p>
+                        <p class="text-2xl font-extrabold tracking-tight text-cofima">COFIMOV</p>
                         <p class="text-[10px] font-medium tracking-wide text-steel uppercase">Compagnie Fiduciaire de Management et d&apos;Audit</p>
                     </div>
                 </a>

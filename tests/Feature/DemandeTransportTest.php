@@ -15,7 +15,7 @@ class DemandeTransportTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_user_can_submit_a_demande_with_a_justificatif(): void
+    public function test_user_can_submit_a_demande_with_a_single_trajet_and_a_justificatif(): void
     {
         Mail::fake();
         Storage::fake('public');
@@ -24,12 +24,16 @@ class DemandeTransportTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)->post('/demandes', [
-            'lieu_depart' => 'Plateau',
-            'lieu_arrivee' => 'Cocody',
-            'date_deplacement' => now()->addDay()->format('Y-m-d'),
-            'moyen_transport' => 'Taxi',
+            'trajets' => [
+                [
+                    'lieu_depart' => 'Plateau',
+                    'lieu_arrivee' => 'Cocody',
+                    'date_deplacement' => now()->addDay()->format('Y-m-d'),
+                    'moyen_transport' => 'Taxi',
+                    'cout_estime' => 8500,
+                ],
+            ],
             'motif' => 'Mission client',
-            'cout_estime' => 8500,
             'justificatif' => UploadedFile::fake()->image('recu.jpg'),
         ]);
 
@@ -39,6 +43,8 @@ class DemandeTransportTest extends TestCase
         $this->assertNotNull($demande);
         $this->assertSame($user->id, $demande->user_id);
         $this->assertSame('en_attente', $demande->statut);
+        $this->assertSame('8500.00', (string) $demande->cout_estime);
+        $this->assertCount(1, $demande->trajets);
         $this->assertCount(1, $demande->justificatifs);
         $this->assertCount(1, $demande->historiques);
 
@@ -51,14 +57,63 @@ class DemandeTransportTest extends TestCase
         });
     }
 
-    public function test_demande_requires_mandatory_fields(): void
+    public function test_user_can_submit_a_demande_with_multiple_trajets(): void
+    {
+        Mail::fake();
+
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post('/demandes', [
+            'trajets' => [
+                [
+                    'lieu_depart' => 'Cotonou',
+                    'lieu_arrivee' => 'Porto-Novo',
+                    'date_deplacement' => now()->addDay()->format('Y-m-d'),
+                    'moyen_transport' => 'Taxi',
+                    'cout_estime' => 5000,
+                ],
+                [
+                    'lieu_depart' => 'Porto-Novo',
+                    'lieu_arrivee' => 'Ouidah',
+                    'date_deplacement' => now()->addDays(2)->format('Y-m-d'),
+                    'moyen_transport' => 'Moto',
+                    'cout_estime' => 3000,
+                ],
+            ],
+            'motif' => 'Mission multi-étapes',
+        ]);
+
+        $response->assertRedirect(route('dashboard'));
+
+        $demande = DemandeTransport::first();
+        $this->assertCount(2, $demande->trajets);
+        $this->assertSame('8000.00', (string) $demande->cout_estime);
+    }
+
+    public function test_demande_requires_at_least_one_trajet(): void
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post('/demandes', []);
+        $response = $this->actingAs($user)->post('/demandes', ['motif' => 'Mission']);
+
+        $response->assertSessionHasErrors(['trajets']);
+    }
+
+    public function test_trajet_requires_mandatory_fields(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->post('/demandes', [
+            'trajets' => [[]],
+            'motif' => 'Mission',
+        ]);
 
         $response->assertSessionHasErrors([
-            'lieu_depart', 'lieu_arrivee', 'date_deplacement', 'moyen_transport', 'motif', 'cout_estime',
+            'trajets.0.lieu_depart',
+            'trajets.0.lieu_arrivee',
+            'trajets.0.date_deplacement',
+            'trajets.0.moyen_transport',
+            'trajets.0.cout_estime',
         ]);
     }
 
@@ -67,14 +122,7 @@ class DemandeTransportTest extends TestCase
         $user = User::factory()->create();
         $dg = User::factory()->create(['nom' => 'AVANDE', 'prenom' => 'Jean-Michel']);
 
-        $validee = $user->demandeTransports()->create([
-            'lieu_depart' => 'Plateau',
-            'lieu_arrivee' => 'Cocody',
-            'date_deplacement' => now()->addDay(),
-            'moyen_transport' => 'Taxi',
-            'motif' => 'Mission',
-            'cout_estime' => 5000,
-            'statut' => DemandeTransport::STATUT_VALIDEE,
+        $validee = $this->createDemandeWithTrajet($user, 'Plateau', 'Cocody', DemandeTransport::STATUT_VALIDEE, [
             'valide_par' => $dg->id,
             'date_validation' => now(),
         ]);
@@ -84,14 +132,7 @@ class DemandeTransportTest extends TestCase
             'commentaire' => 'Demande validée.',
         ]);
 
-        $rejetee = $user->demandeTransports()->create([
-            'lieu_depart' => 'Cotonou',
-            'lieu_arrivee' => 'Porto-Novo',
-            'date_deplacement' => now()->addDay(),
-            'moyen_transport' => 'Moto',
-            'motif' => 'Mission 2',
-            'cout_estime' => 3000,
-            'statut' => DemandeTransport::STATUT_REJETEE,
+        $rejetee = $this->createDemandeWithTrajet($user, 'Cotonou', 'Porto-Novo', DemandeTransport::STATUT_REJETEE, [
             'valide_par' => $dg->id,
             'date_validation' => now(),
             'motif_rejet' => 'Justificatif manquant.',
@@ -103,15 +144,7 @@ class DemandeTransportTest extends TestCase
         ]);
 
         // Pending demande: shows in "Mes demandes" but must not appear in the history section.
-        $user->demandeTransports()->create([
-            'lieu_depart' => 'Abomey',
-            'lieu_arrivee' => 'Bohicon',
-            'date_deplacement' => now()->addDay(),
-            'moyen_transport' => 'Taxi',
-            'motif' => 'Mission 3',
-            'cout_estime' => 2000,
-            'statut' => DemandeTransport::STATUT_EN_ATTENTE,
-        ]);
+        $this->createDemandeWithTrajet($user, 'Abomey', 'Bohicon', DemandeTransport::STATUT_EN_ATTENTE);
 
         $response = $this->actingAs($user)->get('/dashboard');
 
@@ -127,7 +160,7 @@ class DemandeTransportTest extends TestCase
     public function test_owner_can_download_the_pdf_letter(): void
     {
         $user = User::factory()->create();
-        $demande = $this->createDemande($user);
+        $demande = $this->createDemandeWithTrajet($user, 'Plateau', 'Cocody');
 
         $response = $this->actingAs($user)->get(route('demandes.pdf', $demande));
 
@@ -139,23 +172,78 @@ class DemandeTransportTest extends TestCase
     {
         $user = User::factory()->create();
         $other = User::factory()->create();
-        $demande = $this->createDemande($user);
+        $demande = $this->createDemandeWithTrajet($user, 'Plateau', 'Cocody');
 
         $response = $this->actingAs($other)->get(route('demandes.pdf', $demande));
 
         $response->assertForbidden();
     }
 
-    private function createDemande(User $user): DemandeTransport
+    public function test_user_can_export_own_demandes_as_pdf_for_a_period(): void
     {
-        return $user->demandeTransports()->create([
-            'lieu_depart' => 'Plateau',
-            'lieu_arrivee' => 'Cocody',
-            'date_deplacement' => now()->addDay(),
-            'moyen_transport' => 'Taxi',
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+
+        $demande = $user->demandeTransports()->create(['motif' => 'Mission', 'cout_estime' => 5000, 'statut' => 'en_attente']);
+        $demande->trajets()->create([
+            'lieu_depart' => 'Plateau', 'lieu_arrivee' => 'Cocody',
+            'date_deplacement' => '2026-03-15', 'moyen_transport' => 'Taxi', 'cout_estime' => 5000,
+        ]);
+
+        // Belongs to another user: must not appear in this export.
+        $autreDemande = $other->demandeTransports()->create(['motif' => 'Autre', 'cout_estime' => 2000, 'statut' => 'en_attente']);
+        $autreDemande->trajets()->create([
+            'lieu_depart' => 'Abomey', 'lieu_arrivee' => 'Bohicon',
+            'date_deplacement' => '2026-03-16', 'moyen_transport' => 'Taxi', 'cout_estime' => 2000,
+        ]);
+
+        $response = $this->actingAs($user)->get('/demandes/export/pdf?from=2026-03-01&to=2026-03-31');
+
+        $response->assertOk();
+        $response->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_user_can_export_own_demandes_as_excel_for_a_period(): void
+    {
+        $user = User::factory()->create();
+
+        $demande = $user->demandeTransports()->create(['motif' => 'Mission', 'cout_estime' => 5000, 'statut' => 'en_attente']);
+        $demande->trajets()->create([
+            'lieu_depart' => 'Plateau', 'lieu_arrivee' => 'Cocody',
+            'date_deplacement' => '2026-03-15', 'moyen_transport' => 'Taxi', 'cout_estime' => 5000,
+        ]);
+
+        $response = $this->actingAs($user)->get('/demandes/export/excel?from=2026-03-01&to=2026-03-31');
+
+        $response->assertOk();
+        $response->assertHeader(
+            'content-type',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        );
+    }
+
+    private function createDemandeWithTrajet(
+        User $user,
+        string $depart,
+        string $arrivee,
+        string $statut = DemandeTransport::STATUT_EN_ATTENTE,
+        array $extra = []
+    ): DemandeTransport {
+        $demande = $user->demandeTransports()->create([
             'motif' => 'Mission',
             'cout_estime' => 5000,
-            'statut' => DemandeTransport::STATUT_EN_ATTENTE,
+            'statut' => $statut,
+            ...$extra,
         ]);
+
+        $demande->trajets()->create([
+            'lieu_depart' => $depart,
+            'lieu_arrivee' => $arrivee,
+            'date_deplacement' => now()->addDay(),
+            'moyen_transport' => 'Taxi',
+            'cout_estime' => 5000,
+        ]);
+
+        return $demande;
     }
 }

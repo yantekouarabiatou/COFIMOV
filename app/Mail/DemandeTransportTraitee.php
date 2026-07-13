@@ -41,7 +41,7 @@ class DemandeTransportTraitee extends Mailable
      */
     public function attachments(): array
     {
-        $demande = $this->demande->loadMissing('user.poste');
+        $demande = $this->demande->loadMissing('user.poste', 'trajets');
 
         return [
             Attachment::fromData(

@@ -26,10 +26,14 @@
         </p>
 
         <p style="color:#555; line-height:1.8;">
-            Votre demande de frais de transport du
-            <strong>{{ $demande->date_deplacement->isoFormat('D MMMM YYYY') }}</strong>
-            ({{ $demande->lieu_depart }} → {{ $demande->lieu_arrivee }}) a été
-            <strong>{{ $estValidee ? 'validée' : 'rejetée' }}</strong> par la Direction Générale.
+            Votre demande de frais de transport
+            @if ($demande->trajets->count() === 1)
+                du <strong>{{ $demande->trajets->first()->date_deplacement->isoFormat('D MMMM YYYY') }}</strong>
+                ({{ $demande->trajets->first()->lieu_depart }} → {{ $demande->trajets->first()->lieu_arrivee }})
+            @else
+                comportant {{ $demande->trajets->count() }} trajets
+            @endif
+            a été <strong>{{ $estValidee ? 'validée' : 'rejetée' }}</strong> par la Direction Générale.
         </p>
 
         @if ($estValidee)
@@ -51,19 +55,7 @@
             <h4 style="margin:0 0 12px; color:#333; font-size:0.95rem;">Détails de la demande :</h4>
             <table style="width:100%; font-size:0.9rem; color:#555;">
                 <tr>
-                    <td style="padding:6px 0;"><strong>Trajet :</strong></td>
-                    <td style="padding:6px 0;">{{ $demande->lieu_depart }} → {{ $demande->lieu_arrivee }}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px 0;"><strong>Date du déplacement :</strong></td>
-                    <td style="padding:6px 0;">{{ $demande->date_deplacement->isoFormat('D MMMM YYYY') }}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px 0;"><strong>Moyen de transport :</strong></td>
-                    <td style="padding:6px 0;">{{ $demande->moyen_transport }}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px 0;"><strong>Coût estimé :</strong></td>
+                    <td style="padding:6px 0;"><strong>Coût total :</strong></td>
                     <td style="padding:6px 0;"><strong style="color:#1B3A6B;">{{ number_format($demande->cout_estime, 0, ',', ' ') }} FCFA</strong></td>
                 </tr>
                 <tr>
@@ -74,6 +66,29 @@
                         </strong>
                     </td>
                 </tr>
+            </table>
+        </div>
+
+        <div style="margin: 16px 0;">
+            <table style="width:100%; border-collapse: collapse; font-size:0.85rem;">
+                <thead>
+                    <tr style="background:#f1f5f9;">
+                        <th style="padding:6px 8px; text-align:left; border:1px solid #e2e8f0; color:#6B7280; font-size:0.75rem; text-transform:uppercase;">Trajet</th>
+                        <th style="padding:6px 8px; text-align:left; border:1px solid #e2e8f0; color:#6B7280; font-size:0.75rem; text-transform:uppercase;">Date</th>
+                        <th style="padding:6px 8px; text-align:left; border:1px solid #e2e8f0; color:#6B7280; font-size:0.75rem; text-transform:uppercase;">Transport</th>
+                        <th style="padding:6px 8px; text-align:right; border:1px solid #e2e8f0; color:#6B7280; font-size:0.75rem; text-transform:uppercase;">Coût</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($demande->trajets as $trajet)
+                        <tr>
+                            <td style="padding:6px 8px; border:1px solid #e2e8f0; color:#555;">{{ $trajet->lieu_depart }} → {{ $trajet->lieu_arrivee }}</td>
+                            <td style="padding:6px 8px; border:1px solid #e2e8f0; color:#555;">{{ $trajet->date_deplacement->isoFormat('D MMMM YYYY') }}</td>
+                            <td style="padding:6px 8px; border:1px solid #e2e8f0; color:#555;">{{ $trajet->moyen_transport }}</td>
+                            <td style="padding:6px 8px; border:1px solid #e2e8f0; color:#555; text-align:right;">{{ number_format($trajet->cout_estime, 0, ',', ' ') }} FCFA</td>
+                        </tr>
+                    @endforeach
+                </tbody>
             </table>
         </div>
 

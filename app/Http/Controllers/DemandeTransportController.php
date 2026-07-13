@@ -2,34 +2,47 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\DemandesTransportExport;
+use App\Http\Controllers\Concerns\ResolvesExportPeriod;
 use App\Mail\DemandeTransportSoumise;
 use App\Models\DemandeTransport;
 use App\Models\Justificatif;
+use App\Models\Trajet;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Mail;
+use Maatwebsite\Excel\Facades\Excel;
 
 class DemandeTransportController extends Controller
 {
+    use ResolvesExportPeriod;
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'lieu_depart' => ['required', 'string', 'max:255'],
-            'lieu_arrivee' => ['required', 'string', 'max:255'],
-            'date_deplacement' => ['required', 'date'],
-            'moyen_transport' => ['required', 'in:Taxi,Moto,Véhicule personnel,Location,Autre'],
+            'trajets' => ['required', 'array', 'min:1'],
+            'trajets.*.lieu_depart' => ['required', 'string', 'max:255'],
+            'trajets.*.lieu_arrivee' => ['required', 'string', 'max:255'],
+            'trajets.*.date_deplacement' => ['required', 'date'],
+            'trajets.*.moyen_transport' => ['required', 'in:Taxi,Moto,Véhicule personnel,Location,Autre'],
+            'trajets.*.cout_estime' => ['required', 'numeric', 'min:0'],
             'motif' => ['required', 'string', 'max:255'],
-            'cout_estime' => ['required', 'numeric', 'min:0'],
             'commentaire' => ['nullable', 'string'],
             'justificatif' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
         ]);
 
         $demande = $request->user()->demandeTransports()->create([
-            ...$validated,
+            'motif' => $validated['motif'],
+            'commentaire' => $validated['commentaire'] ?? null,
+            'cout_estime' => collect($validated['trajets'])->sum('cout_estime'),
             'statut' => DemandeTransport::STATUT_EN_ATTENTE,
         ]);
+
+        foreach ($validated['trajets'] as $trajet) {
+            $demande->trajets()->create($trajet);
+        }
 
         if ($request->hasFile('justificatif')) {
             $file = $request->file('justificatif');
@@ -68,8 +81,39 @@ class DemandeTransportController extends Controller
             403
         );
 
-        $pdf = Pdf::loadView('pdf.demande-transport', ['demande' => $demande->load('user.poste')]);
+        $pdf = Pdf::loadView('pdf.demande-transport', ['demande' => $demande->load('user.poste', 'trajets')]);
 
         return $pdf->download("demande-transport-{$demande->id}.pdf");
+    }
+
+    public function exportPdf(Request $request): Response
+    {
+        [$from, $to] = $this->resolvePeriod($request);
+
+        $trajets = Trajet::with('demandeTransport.user')
+            ->whereHas('demandeTransport', fn ($query) => $query->where('user_id', $request->user()->id))
+            ->whereBetween('date_deplacement', [$from, $to])
+            ->orderBy('date_deplacement')
+            ->get();
+
+        $pdf = Pdf::loadView('pdf.rapport-demandes', [
+            'trajets' => $trajets,
+            'from' => $from,
+            'to' => $to,
+            'showCollaborateur' => false,
+            'titre' => 'Mes demandes de frais de transport',
+        ]);
+
+        return $pdf->download("mes-demandes-{$from->format('Y-m-d')}-au-{$to->format('Y-m-d')}.pdf");
+    }
+
+    public function exportExcel(Request $request)
+    {
+        [$from, $to] = $this->resolvePeriod($request);
+
+        return Excel::download(
+            new DemandesTransportExport($from, $to, $request->user()->id),
+            "mes-demandes-{$from->format('Y-m-d')}-au-{$to->format('Y-m-d')}.xlsx"
+        );
     }
 }

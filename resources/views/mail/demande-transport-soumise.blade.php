@@ -46,24 +46,8 @@
                     <td style="padding:6px 0;">{{ $demande->user->poste?->intitule ?? 'N/A' }}</td>
                 </tr>
                 <tr>
-                    <td style="padding:6px 0;"><strong>Trajet :</strong></td>
-                    <td style="padding:6px 0;">{{ $demande->lieu_depart }} → {{ $demande->lieu_arrivee }}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px 0;"><strong>Date du déplacement :</strong></td>
-                    <td style="padding:6px 0;">{{ $demande->date_deplacement->isoFormat('D MMMM YYYY') }}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px 0;"><strong>Moyen de transport :</strong></td>
-                    <td style="padding:6px 0;">{{ $demande->moyen_transport }}</td>
-                </tr>
-                <tr>
                     <td style="padding:6px 0;"><strong>Motif :</strong></td>
                     <td style="padding:6px 0;">{{ $demande->motif }}</td>
-                </tr>
-                <tr>
-                    <td style="padding:6px 0;"><strong>Coût estimé :</strong></td>
-                    <td style="padding:6px 0;"><strong style="color:#1B3A6B;">{{ number_format($demande->cout_estime, 0, ',', ' ') }} FCFA</strong></td>
                 </tr>
                 @if ($demande->commentaire)
                     <tr>
@@ -71,6 +55,33 @@
                         <td style="padding:6px 0;">{{ $demande->commentaire }}</td>
                     </tr>
                 @endif
+            </table>
+        </div>
+
+        <div style="margin: 16px 0;">
+            <table style="width:100%; border-collapse: collapse; font-size:0.85rem;">
+                <thead>
+                    <tr style="background:#f1f5f9;">
+                        <th style="padding:6px 8px; text-align:left; border:1px solid #e2e8f0; color:#6B7280; font-size:0.75rem; text-transform:uppercase;">Trajet</th>
+                        <th style="padding:6px 8px; text-align:left; border:1px solid #e2e8f0; color:#6B7280; font-size:0.75rem; text-transform:uppercase;">Date</th>
+                        <th style="padding:6px 8px; text-align:left; border:1px solid #e2e8f0; color:#6B7280; font-size:0.75rem; text-transform:uppercase;">Transport</th>
+                        <th style="padding:6px 8px; text-align:right; border:1px solid #e2e8f0; color:#6B7280; font-size:0.75rem; text-transform:uppercase;">Coût</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($demande->trajets as $trajet)
+                        <tr>
+                            <td style="padding:6px 8px; border:1px solid #e2e8f0; color:#555;">{{ $trajet->lieu_depart }} → {{ $trajet->lieu_arrivee }}</td>
+                            <td style="padding:6px 8px; border:1px solid #e2e8f0; color:#555;">{{ $trajet->date_deplacement->isoFormat('D MMMM YYYY') }}</td>
+                            <td style="padding:6px 8px; border:1px solid #e2e8f0; color:#555;">{{ $trajet->moyen_transport }}</td>
+                            <td style="padding:6px 8px; border:1px solid #e2e8f0; color:#555; text-align:right;">{{ number_format($trajet->cout_estime, 0, ',', ' ') }} FCFA</td>
+                        </tr>
+                    @endforeach
+                    <tr style="background:#f8f9fa;">
+                        <td colspan="3" style="padding:6px 8px; border:1px solid #e2e8f0; font-weight:600; color:#333;">Total</td>
+                        <td style="padding:6px 8px; border:1px solid #e2e8f0; font-weight:600; color:#1B3A6B; text-align:right;">{{ number_format($demande->cout_estime, 0, ',', ' ') }} FCFA</td>
+                    </tr>
+                </tbody>
             </table>
         </div>
 
