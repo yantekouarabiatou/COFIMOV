@@ -41,6 +41,7 @@ table.dataTable tbody tr:hover {
 .dt-paging .dt-paging-button {
     border-radius: 0.5rem !important;
     margin-left: 0.15rem;
+    color: #fff !important;
 }
 .dt-paging .dt-paging-button.current {
     background: #1B3A6B !important;
